@@ -156,3 +156,12 @@ func setupTestBucket(t *testing.T, files map[string][]byte) string {
 export BUCKET_URL="s3://my-bucket?region=us-east-1"
 make all && ./bin/givetypst -v
 ```
+
+### Docker Build
+
+The `Dockerfile` accepts a `TYPST_VERSION` build argument (default: `0.14.2`):
+
+```bash
+docker build -t givetypst .                              # Uses default Typst version
+docker build --build-arg TYPST_VERSION=0.15.0 -t givetypst .  # Custom version
+```
