@@ -1,0 +1,33 @@
+# Build and run the dev container
+name: devcontainer
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/devcontainer.yaml" # Include workflow itself
+      - ".devcontainer/devcontainer.json"
+      - ".devcontainer/Dockerfile"
+      - "Makefile"
+      - "go.mod"
+      - "go.sum"
+      - "main.go"
+      - "server.go"
+      - "typst.go"
+
+jobs:
+  build:
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
+      - name: build and run dev container
+        uses: devcontainers/ci@v0.3
+        with:
+          push: never
+          runCmd: make all
