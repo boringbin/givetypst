@@ -17,11 +17,13 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 
 FROM alpine:latest@sha256:4b7ce07002c69e8f3d704a9c5d6fd3053be500b7f1c69fc0d80990c2ad8dd412 AS runner
 
+ARG TYPST_VERSION=0.14.2
+
 RUN apk --no-cache add ca-certificates
 
 # Install Typst
 RUN apk add --no-cache curl tar xz && \
-    curl -LO https://github.com/typst/typst/releases/download/v0.14.2/typst-x86_64-unknown-linux-musl.tar.xz && \
+    curl -LO https://github.com/typst/typst/releases/download/v${TYPST_VERSION}/typst-x86_64-unknown-linux-musl.tar.xz && \
     tar -xf typst-x86_64-unknown-linux-musl.tar.xz && \
     mv typst-x86_64-unknown-linux-musl/typst /usr/local/bin/ && \
     rm -rf typst-* && \

@@ -108,7 +108,13 @@ Any S3-compatible storage via [gocloud.dev/blob](https://gocloud.dev/howto/blob/
 
 ## Typst Version
 
-Currently targets [Typst 0.14.2](https://github.com/typst/typst/releases/tag/v0.14.2).
+The Docker image defaults to [Typst 0.14.2](https://github.com/typst/typst/releases/tag/v0.14.2).
+
+To use a different Typst version, build the image with the `TYPST_VERSION` argument:
+
+```bash
+docker build --build-arg TYPST_VERSION=0.15.0 -t givetypst .
+```
 
 ## License
 
