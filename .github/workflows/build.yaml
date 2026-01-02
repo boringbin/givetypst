@@ -1,0 +1,41 @@
+# Run the build
+name: build
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/build.yaml" # Include workflow itself
+      - "Makefile"
+      - "go.mod"
+      - "go.sum"
+      - "main.go"
+      - "server.go"
+      - "typst.go"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/build.yaml" # Include workflow itself
+      - "Makefile"
+      - "go.mod"
+      - "go.sum"
+      - "main.go"
+      - "server.go"
+      - "typst.go"
+
+jobs:
+  build:
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6
+        with:
+          go-version: 1.25.5
+
+      - name: run build
+        run: make

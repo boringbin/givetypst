@@ -1,0 +1,22 @@
+# Ignore everything
+*
+*/
+
+# Allow these things
+!go.mod
+!go.sum
+!main.go
+!server.go
+!typst.go
+
+# Ignore these files.
+**/*.exe
+**/*.exe~
+**/*.dll
+**/*.so
+**/*.dylib
+**/*.test
+**/*.out
+**/vendor/
+**/go.work
+**/go.work.sum
