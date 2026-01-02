@@ -1,0 +1,9 @@
+[files]
+extend-exclude = [
+    "*",
+    "!AGENTS.md",
+    "!CLAUDE.md",
+    "!LICENSE",
+    "!README.md",
+    "!*.go",
+]
