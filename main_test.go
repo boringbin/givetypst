@@ -129,6 +129,7 @@ func runTest(t *testing.T, tc runTestConfig) {
 	}
 }
 
+// TestRun_VersionFlag tests the version flag.
 func TestRun_VersionFlag(t *testing.T) {
 	runTest(t, runTestConfig{
 		name:               "version flag",
@@ -138,6 +139,7 @@ func TestRun_VersionFlag(t *testing.T) {
 	})
 }
 
+// TestRun_MissingBucketURL tests the missing BUCKET_URL.
 func TestRun_MissingBucketURL(t *testing.T) {
 	runTest(t, runTestConfig{
 		name:               "missing BUCKET_URL",
@@ -148,6 +150,7 @@ func TestRun_MissingBucketURL(t *testing.T) {
 	})
 }
 
+// TestRun_PortEnvOverride tests the PORT env overrides flag.
 func TestRun_PortEnvOverride(t *testing.T) {
 	runTest(t, runTestConfig{
 		name:               "PORT env overrides flag",
@@ -159,6 +162,7 @@ func TestRun_PortEnvOverride(t *testing.T) {
 	})
 }
 
+// TestRun_InvalidPortEnv tests the invalid PORT env.
 func TestRun_InvalidPortEnv(t *testing.T) {
 	runTest(t, runTestConfig{
 		name:               "invalid PORT falls back to flag",
@@ -170,6 +174,7 @@ func TestRun_InvalidPortEnv(t *testing.T) {
 	})
 }
 
+// TestRun_DefaultPort tests the default port 8080.
 func TestRun_DefaultPort(t *testing.T) {
 	runTest(t, runTestConfig{
 		name:               "default port 8080",
@@ -181,6 +186,7 @@ func TestRun_DefaultPort(t *testing.T) {
 	})
 }
 
+// TestRun_VerboseMode tests the verbose mode.
 func TestRun_VerboseMode(t *testing.T) {
 	runTest(t, runTestConfig{
 		name:               "verbose mode",
@@ -192,6 +198,7 @@ func TestRun_VerboseMode(t *testing.T) {
 	})
 }
 
+// TestRun_GracefulShutdownSIGINT tests the graceful shutdown SIGINT.
 func TestRun_GracefulShutdownSIGINT(t *testing.T) {
 	runTest(t, runTestConfig{
 		name:               "graceful shutdown SIGINT",
@@ -203,6 +210,7 @@ func TestRun_GracefulShutdownSIGINT(t *testing.T) {
 	})
 }
 
+// TestRun_GracefulShutdownSIGTERM tests the graceful shutdown SIGTERM.
 func TestRun_GracefulShutdownSIGTERM(t *testing.T) {
 	runTest(t, runTestConfig{
 		name:               "graceful shutdown SIGTERM",
@@ -214,6 +222,7 @@ func TestRun_GracefulShutdownSIGTERM(t *testing.T) {
 	})
 }
 
+// TestRun_BucketURLEnv tests the BUCKET_URL from env.
 func TestRun_BucketURLEnv(t *testing.T) {
 	runTest(t, runTestConfig{
 		name:               "BUCKET_URL from env",

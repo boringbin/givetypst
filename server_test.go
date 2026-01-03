@@ -40,6 +40,7 @@ func setupTestBucket(t *testing.T, files map[string][]byte) string {
 	return "file://" + dir
 }
 
+// TestNewServer_DefaultLimits tests the default limits.
 func TestNewServer_DefaultLimits(t *testing.T) {
 	t.Parallel()
 
@@ -55,6 +56,7 @@ func TestNewServer_DefaultLimits(t *testing.T) {
 	}
 }
 
+// TestNewServer_CustomLimits tests the custom limits.
 func TestNewServer_CustomLimits(t *testing.T) {
 	t.Parallel()
 
@@ -72,6 +74,7 @@ func TestNewServer_CustomLimits(t *testing.T) {
 	}
 }
 
+// TestHandleGenerate_Errors tests the handleGenerate errors.
 func TestHandleGenerate_Errors(t *testing.T) {
 	t.Parallel()
 
@@ -161,6 +164,7 @@ func TestHandleGenerate_Errors(t *testing.T) {
 	}
 }
 
+// TestFetchTemplate_Success tests the fetchTemplate success.
 func TestFetchTemplate_Success(t *testing.T) {
 	t.Parallel()
 
@@ -181,6 +185,7 @@ func TestFetchTemplate_Success(t *testing.T) {
 	}
 }
 
+// TestFetchTemplate_NotFound tests the fetchTemplate not found.
 func TestFetchTemplate_NotFound(t *testing.T) {
 	t.Parallel()
 
@@ -193,6 +198,7 @@ func TestFetchTemplate_NotFound(t *testing.T) {
 	}
 }
 
+// TestFetchData_Success tests the fetchData success.
 func TestFetchData_Success(t *testing.T) {
 	t.Parallel()
 
@@ -216,6 +222,7 @@ func TestFetchData_Success(t *testing.T) {
 	}
 }
 
+// TestFetchData_NotFound tests the fetchData not found.
 func TestFetchData_NotFound(t *testing.T) {
 	t.Parallel()
 
@@ -228,6 +235,7 @@ func TestFetchData_NotFound(t *testing.T) {
 	}
 }
 
+// TestFetchData_InvalidJSON tests the fetchData invalid JSON.
 func TestFetchData_InvalidJSON(t *testing.T) {
 	t.Parallel()
 
@@ -246,6 +254,7 @@ func TestFetchData_InvalidJSON(t *testing.T) {
 	}
 }
 
+// TestGenerateRequest_JSONSerialization tests the generateRequest JSON serialization.
 func TestGenerateRequest_JSONSerialization(t *testing.T) {
 	t.Parallel()
 
@@ -296,6 +305,7 @@ func TestGenerateRequest_JSONSerialization(t *testing.T) {
 	}
 }
 
+// TestHandler_RegistersRoutes tests the handler registers routes.
 func TestHandler_RegistersRoutes(t *testing.T) {
 	t.Parallel()
 
