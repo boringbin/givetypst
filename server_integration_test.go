@@ -6,15 +6,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"net"
 	"net/http"
-	"net/url"
 	"strings"
 	"testing"
-	"time"
-
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 const (
@@ -26,89 +20,39 @@ const (
 	testBucketName = "test-bucket"
 )
 
-// setupSeaweedFS starts a SeaweedFS container and returns a gocloud-compatible bucket URL.
-func setupSeaweedFS(t *testing.T) (bucketURL string, hostPort string) {
+// resetBucket deletes and recreates the test bucket to ensure test isolation.
+func resetBucket(t *testing.T) {
 	t.Helper()
 
 	ctx := context.Background()
 
-	req := testcontainers.ContainerRequest{
-		Image:        seaweedImage,
-		ExposedPorts: []string{seaweedS3Port},
-		Cmd:          []string{"server", "-s3", "-dir=/data"},
-		WaitingFor: wait.ForAll(
-			wait.ForListeningPort(seaweedS3Port),
-			wait.ForLog("Start Seaweed S3 API"),
-		).WithDeadline(60 * time.Second),
-	}
-
-	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: req,
-		Started:          true,
-	})
+	// Delete the bucket.
+	deleteURL := fmt.Sprintf("http://%s/%s?force=true", seaweedHostPort, testBucketName)
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, deleteURL, nil)
 	if err != nil {
-		t.Fatalf("failed to start seaweedfs container: %v", err)
-	}
-
-	t.Cleanup(func() {
-		if termErr := testcontainers.TerminateContainer(container); termErr != nil {
-			t.Logf("failed to terminate container: %v", termErr)
-		}
-	})
-
-	host, err := container.Host(ctx)
-	if err != nil {
-		t.Fatalf("failed to get host: %v", err)
-	}
-
-	port, err := container.MappedPort(ctx, seaweedS3Port)
-	if err != nil {
-		t.Fatalf("failed to get port: %v", err)
-	}
-
-	hostPort = net.JoinHostPort(host, port.Port())
-	endpoint := fmt.Sprintf("http://%s", hostPort)
-
-	// Give SeaweedFS a moment to fully initialize all services
-	time.Sleep(2 * time.Second)
-
-	// Create the test bucket using a direct HTTP PUT request
-	createBucket(t, ctx, hostPort, testBucketName)
-
-	// Set AWS credentials for gocloud.dev/blob/s3blob
-	// SeaweedFS doesn't require auth by default, but the AWS SDK needs non-empty values
-	t.Setenv("AWS_ACCESS_KEY_ID", "any")
-	t.Setenv("AWS_SECRET_ACCESS_KEY", "any")
-
-	// Build gocloud-compatible S3 URL.
-	// See: https://pkg.go.dev/gocloud.dev/blob/s3blob
-	bucketURL = fmt.Sprintf(
-		"s3://%s?endpoint=%s&disable_https=true&s3ForcePathStyle=true&region=us-east-1",
-		testBucketName,
-		url.QueryEscape(endpoint),
-	)
-
-	return bucketURL, hostPort
-}
-
-// createBucket creates a bucket in SeaweedFS using the S3 CreateBucket API.
-func createBucket(t *testing.T, ctx context.Context, hostPort, bucket string) {
-	t.Helper()
-
-	bucketURL := fmt.Sprintf("http://%s/%s", hostPort, bucket)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, bucketURL, nil)
-	if err != nil {
-		t.Fatalf("failed to create bucket request: %v", err)
+		t.Fatalf("failed to create delete request: %v", err)
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
+		t.Fatalf("failed to delete bucket: %v", err)
+	}
+	resp.Body.Close()
+
+	// Recreate the bucket.
+	createURL := fmt.Sprintf("http://%s/%s", seaweedHostPort, testBucketName)
+	req, err = http.NewRequestWithContext(ctx, http.MethodPut, createURL, nil)
+	if err != nil {
+		t.Fatalf("failed to create bucket request: %v", err)
+	}
+
+	resp, err = http.DefaultClient.Do(req)
+	if err != nil {
 		t.Fatalf("failed to create bucket: %v", err)
 	}
-	defer resp.Body.Close()
+	resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusConflict {
+	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("failed to create bucket, status: %d", resp.StatusCode)
 	}
 }
@@ -138,12 +82,14 @@ func uploadToSeaweedFS(t *testing.T, hostPort, bucket, key string, content []byt
 
 // TestFetchTemplate_S3 tests fetching a template from S3.
 func TestFetchTemplate_S3(t *testing.T) {
-	bucketURL, hostPort := setupSeaweedFS(t)
+	resetBucket(t)
+	t.Setenv("AWS_ACCESS_KEY_ID", "any")
+	t.Setenv("AWS_SECRET_ACCESS_KEY", "any")
 
 	expectedContent := "= Test Template\n\nThis is a test from S3."
-	uploadToSeaweedFS(t, hostPort, testBucketName, "test.typ", []byte(expectedContent))
+	uploadToSeaweedFS(t, seaweedHostPort, testBucketName, "test.typ", []byte(expectedContent))
 
-	srv := NewServer(testLogger(), ServerConfig{bucketURL: bucketURL})
+	srv := NewServer(testLogger(), ServerConfig{bucketURL: seaweedBucketURL})
 
 	content, err := srv.fetchTemplate(context.Background(), "test.typ")
 	if err != nil {
@@ -157,9 +103,11 @@ func TestFetchTemplate_S3(t *testing.T) {
 
 // TestFetchTemplate_S3_NotFound tests fetching a non-existent template from S3.
 func TestFetchTemplate_S3_NotFound(t *testing.T) {
-	bucketURL, _ := setupSeaweedFS(t)
+	resetBucket(t)
+	t.Setenv("AWS_ACCESS_KEY_ID", "any")
+	t.Setenv("AWS_SECRET_ACCESS_KEY", "any")
 
-	srv := NewServer(testLogger(), ServerConfig{bucketURL: bucketURL})
+	srv := NewServer(testLogger(), ServerConfig{bucketURL: seaweedBucketURL})
 
 	_, err := srv.fetchTemplate(context.Background(), "nonexistent.typ")
 	if err == nil {
@@ -169,12 +117,14 @@ func TestFetchTemplate_S3_NotFound(t *testing.T) {
 
 // TestFetchData_S3 tests fetching and parsing JSON data from S3.
 func TestFetchData_S3(t *testing.T) {
-	bucketURL, hostPort := setupSeaweedFS(t)
+	resetBucket(t)
+	t.Setenv("AWS_ACCESS_KEY_ID", "any")
+	t.Setenv("AWS_SECRET_ACCESS_KEY", "any")
 
 	dataJSON := `{"name": "John", "age": 30}`
-	uploadToSeaweedFS(t, hostPort, testBucketName, "data.json", []byte(dataJSON))
+	uploadToSeaweedFS(t, seaweedHostPort, testBucketName, "data.json", []byte(dataJSON))
 
-	srv := NewServer(testLogger(), ServerConfig{bucketURL: bucketURL})
+	srv := NewServer(testLogger(), ServerConfig{bucketURL: seaweedBucketURL})
 
 	data, err := srv.fetchData(context.Background(), "data.json")
 	if err != nil {
@@ -191,9 +141,11 @@ func TestFetchData_S3(t *testing.T) {
 
 // TestFetchData_S3_NotFound tests fetching non-existent data from S3.
 func TestFetchData_S3_NotFound(t *testing.T) {
-	bucketURL, _ := setupSeaweedFS(t)
+	resetBucket(t)
+	t.Setenv("AWS_ACCESS_KEY_ID", "any")
+	t.Setenv("AWS_SECRET_ACCESS_KEY", "any")
 
-	srv := NewServer(testLogger(), ServerConfig{bucketURL: bucketURL})
+	srv := NewServer(testLogger(), ServerConfig{bucketURL: seaweedBucketURL})
 
 	_, err := srv.fetchData(context.Background(), "nonexistent.json")
 	if err == nil {
@@ -203,11 +155,13 @@ func TestFetchData_S3_NotFound(t *testing.T) {
 
 // TestFetchData_S3_InvalidJSON tests fetching invalid JSON from S3.
 func TestFetchData_S3_InvalidJSON(t *testing.T) {
-	bucketURL, hostPort := setupSeaweedFS(t)
+	resetBucket(t)
+	t.Setenv("AWS_ACCESS_KEY_ID", "any")
+	t.Setenv("AWS_SECRET_ACCESS_KEY", "any")
 
-	uploadToSeaweedFS(t, hostPort, testBucketName, "bad.json", []byte("not valid json"))
+	uploadToSeaweedFS(t, seaweedHostPort, testBucketName, "bad.json", []byte("not valid json"))
 
-	srv := NewServer(testLogger(), ServerConfig{bucketURL: bucketURL})
+	srv := NewServer(testLogger(), ServerConfig{bucketURL: seaweedBucketURL})
 
 	_, err := srv.fetchData(context.Background(), "bad.json")
 	if err == nil {

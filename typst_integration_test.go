@@ -101,29 +101,6 @@ func (c *ContainerTypstCompiler) Close() error {
 	return c.container.Terminate(c.ctx)
 }
 
-// testCompiler is the shared compiler instance for all tests.
-var testCompiler *ContainerTypstCompiler
-
-// TestMain sets up and tears down the shared container for all tests.
-func TestMain(m *testing.M) {
-	ctx := context.Background()
-
-	var err error
-	testCompiler, err = NewContainerTypstCompiler(ctx)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to create container compiler: %v\n", err)
-		os.Exit(1)
-	}
-
-	code := m.Run()
-
-	if testCompiler != nil {
-		_ = testCompiler.Close()
-	}
-
-	os.Exit(code)
-}
-
 // assertValidPDF verifies that the given bytes represent a valid PDF.
 func assertValidPDF(t *testing.T, pdf []byte) {
 	t.Helper()
